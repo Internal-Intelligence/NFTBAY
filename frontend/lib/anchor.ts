@@ -10,10 +10,20 @@ export const PROGRAM_ID = new PublicKey(
 );
 
 export function getProgram(wallet: WalletContextState, connection: Connection) {
-  const provider = new AnchorProvider(connection, wallet as any, {
+  // AnchorProvider expects a full wallet adapter with signTransaction etc.
+  const anchorWallet = {
+    publicKey: wallet.publicKey,
+    signTransaction: wallet.signTransaction,
+    signAllTransactions: wallet.signAllTransactions,
+  } as any;
+
+  const provider = new AnchorProvider(connection, anchorWallet, {
     commitment: "confirmed",
   });
-  return new Program(IDL as any, PROGRAM_ID, provider);
+
+  // In Anchor 0.30 + generated IDLs that include "address", pass only (idl, provider)
+  // The program ID is read from the IDL metadata.
+  return new Program(IDL as any, provider);
 }
 
 // PDA helpers

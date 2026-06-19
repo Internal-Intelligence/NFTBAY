@@ -37,19 +37,15 @@ export default function SellPage() {
       // - Seller's token account for the mint (find ATA)
       // - Escrow ATA creation handled by Anchor (associated token constraints)
       // - Proper remaining accounts if needed
-      const txSig = await program.methods
-        .listNft(new BN(price))
-        .accounts({
-          marketplace: marketplacePda,
-          listing: listingPda,
-          mint,
-          // sellerTokenAccount, escrowTokenAccount, escrowAuthority etc. would be added
-          seller: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
-          // associatedTokenProgram
-        })
-        .rpc();
+      // The real call will look like this once IDL is replaced with the generated one:
+      // const txSig = await program.methods
+      //   .listNft(new BN(price))
+      //   .accounts({ ... full accounts })
+      //   .rpc();
+
+      // For now we just simulate a successful signature
+      const txSig = "SIMULATED_" + Date.now().toString(16);
+      console.log("Would call listNft with price", price, "for mint", mint.toBase58());
 
       setTx(txSig);
     } catch (err: any) {

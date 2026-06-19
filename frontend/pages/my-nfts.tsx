@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import NftCard from "../components/NftCard";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Metaplex } from "@metaplex-foundation/js"; // fallback for demo - using UMI in real impl
 
 export default function MyNfts() {
   const { connection } = useConnection();
