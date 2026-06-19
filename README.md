@@ -75,6 +75,19 @@ anchor keys list
 anchor deploy --provider.cluster devnet
 ```
 
+## Quick Start
+
+```bash
+cd NFTBAY
+./setup.sh                  # installs toolchain if needed
+cd frontend
+cp .env.local.example .env.local
+# edit .env.local with your Pinata JWT
+npm run dev
+```
+
+Open http://localhost:3000
+
 ## License
 
 MIT
