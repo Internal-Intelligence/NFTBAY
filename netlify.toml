@@ -1,0 +1,12 @@
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "18"
+  # Add this in Netlify UI env vars too if needed:
+  # NEXT_PUBLIC_RPC_URL = "https://api.devnet.solana.com"

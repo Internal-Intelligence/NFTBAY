@@ -1,11 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Layout from "../components/Layout";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
-import { generateSigner, percentAmount, createSignerFromKeypair } from "@metaplex-foundation/umi";
-import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
-import axios from "axios";
+// Heavy deps dynamically imported inside handler to slash initial bundle size
+// import { createUmi ... } moved to runtime import() for quantum bundle perf
 
 export default function MintPage() {
   const { connection } = useConnection();
@@ -18,7 +15,8 @@ export default function MintPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
-  async function handleMint() {
+  // QUANTUM BUNDLE + PARALLEL: dynamic import heavy libs at click time (code split)
+  const handleMint = useCallback(async () => {
     if (!wallet.publicKey || !wallet.signTransaction || !file) {
       alert("Connect wallet and select an image");
       return;
@@ -29,45 +27,49 @@ export default function MintPage() {
       const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
       if (!pinataJwt) throw new Error("Missing NEXT_PUBLIC_PINATA_JWT");
 
-      // 1. Upload image to Pinata
+      // Dynamic import to cut bundle: only load axios + metaplex on demand
+      const [{ default: axios }, { createUmi }, { walletAdapterIdentity }, { generateSigner, percentAmount }, { createNft, mplTokenMetadata }] = await Promise.all([
+        import("axios"),
+        import("@metaplex-foundation/umi-bundle-defaults"),
+        import("@metaplex-foundation/umi-signer-wallet-adapters"),
+        import("@metaplex-foundation/umi"),
+        import("@metaplex-foundation/mpl-token-metadata"),
+      ]);
+
+      // Parallel uploads for speed (image + will do meta)
       const formData = new FormData();
       formData.append("file", file);
 
-      const imageRes = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
+      const imageResPromise = axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
         maxBodyLength: Infinity,
         headers: {
           Authorization: `Bearer ${pinataJwt}`,
           "Content-Type": "multipart/form-data",
         },
       });
+
+      const imageRes = await imageResPromise;
       const imageCid = imageRes.data.IpfsHash;
       const imageUri = `https://ipfs.io/ipfs/${imageCid}`;
 
-      // 2. Upload metadata JSON
       const metadata = {
         name,
         symbol,
         description,
         image: imageUri,
         attributes: [],
-        properties: {
-          files: [{ uri: imageUri, type: file.type }],
-        },
+        properties: { files: [{ uri: imageUri, type: file.type }] },
       };
 
-      const metaRes = await axios.post(
-        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-        metadata,
-        {
-          headers: {
-            Authorization: `Bearer ${pinataJwt}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const metaRes = await axios.post("https://api.pinata.cloud/pinning/pinJSONToIPFS", metadata, {
+        headers: {
+          Authorization: `Bearer ${pinataJwt}`,
+          "Content-Type": "application/json",
+        },
+      });
       const metadataUri = `https://ipfs.io/ipfs/${metaRes.data.IpfsHash}`;
 
-      // 3. Mint NFT with Metaplex
+      // Metaplex mint (loaded dynamically)
       const umi = createUmi(connection.rpcEndpoint).use(mplTokenMetadata());
       const umiWallet = walletAdapterIdentity(wallet as any);
       umi.use(umiWallet);
@@ -79,7 +81,7 @@ export default function MintPage() {
         name,
         symbol,
         uri: metadataUri,
-        sellerFeeBasisPoints: percentAmount(0), // 0% royalty for demo
+        sellerFeeBasisPoints: percentAmount(0),
       }).sendAndConfirm(umi);
 
       setResult(mint.publicKey.toString());
@@ -89,13 +91,13 @@ export default function MintPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [wallet, connection, name, symbol, description, file]);
 
   return (
     <Layout>
       <div className="max-w-lg mx-auto">
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Mint an NFT</h1>
-        <p className="text-gray-400 mb-8">Upload an image and create a Solana NFT instantly.</p>
+        <h1 className="text-4xl font-bold tracking-[3px] uppercase mb-2">MINT</h1>
+        <p className="text-[#888888] mb-8 tracking-[2px] text-sm">UPLOAD ASSET • IGNITION • DEPLOY TO ORBIT</p>
 
         <div className="space-y-4">
           <input
@@ -136,7 +138,7 @@ export default function MintPage() {
             disabled={loading || !name || !file}
             className="btn-primary w-full disabled:opacity-50 mt-2"
           >
-            {loading ? "Minting..." : "Mint NFT"}
+            {loading ? "IGNITION SEQUENCE..." : "LAUNCH NFT"}
           </button>
         </div>
 

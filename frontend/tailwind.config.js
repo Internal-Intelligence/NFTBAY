@@ -8,10 +8,12 @@ module.exports = {
     extend: {
       colors: {
         bay: {
-          dark: "#0a0a0f",
-          card: "#121218",
-          accent: "#00f0ff",
-          accent2: "#ff00aa",
+          dark: "#000000",
+          card: "#111111",
+          accent: "#22ffaa",
+          accent2: "#22ffaa",
+          bright: "#33ffbb",
+          gray: "#888888",
         },
       },
     },

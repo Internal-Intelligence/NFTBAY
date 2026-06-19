@@ -14,6 +14,8 @@ import "@solana/wallet-adapter-react-ui/styles.css";
 // Note: Some wallet adapters (Ledger) can cause transient ESM resolution errors.
 // We intentionally only include Phantom + Solflare for a clean dev experience.
 
+// SpaceX-inspired NFTBAY theme active
+
 const network = WalletAdapterNetwork.Devnet;
 const endpoint = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
 
